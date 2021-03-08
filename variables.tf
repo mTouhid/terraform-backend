@@ -1,7 +1,10 @@
-variable "aws_region" {
-    default = "us-east-1"
-}
-variable "aws_dynamodb_table" {
-  default = "tf-remote-state-lock"
+variable "service_name" {
+  type = string
 }
 
+variable "aws_s3_bucket_name" {
+  type = string
+}
+variable "aws_dynamodb_table_name" {
+  type = string
+}

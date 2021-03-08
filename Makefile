@@ -1,22 +1,20 @@
-SHELL := /usr/bin/env bash
+#!make
+include .env
+export
 
-NDEF = $(if $(value $(1)),,$(error $(1) not set))
+init:
+	aws-vault exec $$AWS_VAULT_PROFILE -- terraform init
 
-.PHONY: init validate apply clean
+validate:
+	aws-vault exec $$AWS_VAULT_PROFILE -- terraform validate
 
-all: init validate apply
-
-init: 
-	@terraform init
-
-validate: 
-	@terraform validate
-
-apply:   
-	@terraform apply -auto-approve
+apply:
+	aws-vault exec $$AWS_VAULT_PROFILE -- terraform apply
 
 destroy:
-	@terraform destroy -auto-approve
+	aws-vault exec $$AWS_VAULT_PROFILE -- terraform destroy
 
 clean:
 	@rm -rf .terraform/ terraform.tfstate*
+
+.PHONY: init validate apply destroy clean
