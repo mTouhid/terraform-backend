@@ -2,7 +2,7 @@ module "label" {
   source  = "cloudposse/label/null"
   version = "0.24.1"
 
-  namespace = "staff-device"
+  namespace = var.programme_namespace
   stage     = terraform.workspace == "default" ? "" : terraform.workspace
   name      = var.service_name
   delimiter = "-"

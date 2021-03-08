@@ -2,6 +2,9 @@
 include .env
 export
 
+fmt:
+	@terraform fmt --recursive
+
 init:
 	aws-vault exec $$AWS_VAULT_PROFILE -- terraform init
 
@@ -17,4 +20,4 @@ destroy:
 clean:
 	@rm -rf .terraform/ terraform.tfstate*
 
-.PHONY: init validate apply destroy clean
+.PHONY: fmt init validate apply destroy clean
