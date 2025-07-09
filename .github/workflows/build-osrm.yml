@@ -63,16 +63,3 @@ jobs:
           aws ecr create-repository --repository-name $ECR_REPOSITORY
           docker tag osrm-backend-custom:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      # Clean up Docker images
-      - name: Clean up Docker images
-        if: always()
-        run: |
-          docker system prune --all --force
-
-      # Clean up data directory
-      - name: Clean up data directory
-        if: always()
-        run: |
-          rm -rf data || echo "Failed to remove data directory"
-          echo "Data directory cleaned up"
