@@ -1,0 +1,78 @@
+name: Create OSRM Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+    GEOFABRIK_REGION: "europe"
+    GEOFABRIK_SUBREGION: "isle-of-man"
+
+jobs:
+
+  build-osrm:
+    runs-on: codebuild-test-ti-project-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get GeoFabrik PBF file
+        run: |
+          mkdir -p data
+          cd data
+          rm -Rf *
+          # Download the latest OSM PBF file for the Isle
+          wget https://download.geofabrik.de/$GEOFABRIK_REGION/$GEOFABRIK_SUBREGION-latest.osm.pbf
+          cd ..
+
+      - name: Extract OSRM data
+        run: |
+          docker run -t -v "${PWD}/data:/data" osrm/osrm-backend osrm-extract -p /opt/car.lua /data/$GEOFABRIK_SUBREGION-latest.osm.pbf
+
+      - name: Partition OSRM data
+        run: |      
+          docker run -t -v "${PWD}/data:/data" osrm/osrm-backend osrm-partition /data/$GEOFABRIK_SUBREGION-latest.osrm
+ 
+      - name: Customize OSRM data
+        run: |
+          docker run -t -v "${PWD}/data:/data" osrm/osrm-backend osrm-customize /data/$GEOFABRIK_SUBREGION-latest.osrm
+
+      - name: Build Docker image
+        run: |
+          sudo docker build --no-cache -t osrm-backend-custom -f Dockerfile .
+
+      # Log in to Amazon ECR
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Create ECR repository if it doesn't exist
+      - name: Push Docker image to ECR
+        env:
+          ECR_REPOSITORY: "test-ti-osrmuk"
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
+          aws ecr create-repository --repository-name $ECR_REPOSITORY
+          docker tag osrm-backend-custom:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # Clean up Docker images
+      - name: Clean up Docker images
+        if: always()
+        run: |
+          docker system prune --all --force
+
+      # Clean up data directory
+      - name: Clean up data directory
+        if: always()
+        run: |
+          rm -rf data || echo "Failed to remove data directory"
+          echo "Data directory cleaned up"
