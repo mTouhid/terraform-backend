@@ -46,7 +46,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          sudo docker build --no-cache -t osrm-backend-custom -f Dockerfile .
+          sudo docker build --no-cache -t osrm-backend-custom -f Dockerfile . --load
 
       # Log in to Amazon ECR
       - name: Log in to Amazon ECR
