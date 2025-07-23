@@ -17,7 +17,7 @@ env:
 jobs:
 
   build-osrm:
-    runs-on: codebuild-test-ti-project-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-bodds-nonprod-gh-runner-project-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
 
       - name: Checkout repository
